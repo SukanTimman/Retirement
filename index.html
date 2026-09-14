@@ -610,11 +610,12 @@ assets.forEach(a=>{
 
 
 function fvAnnuity(monthlyDeposit, annualRate, years, lumpSumNow=0){
-  // future value of monthly deposits, compounded monthly, plus a lump sum invested today compounded annually
+  // future value of monthly deposits, compounded monthly, plus a lump sum invested today
+  // compounded monthly at the SAME schedule as the deposits (kept consistent with buildYearlySeries)
   const r = annualRate/100/12;
   const n = years*12;
-  const fvLump = lumpSumNow * Math.pow(1+annualRate/100, years);
   if(r===0) return monthlyDeposit*n + lumpSumNow;
+  const fvLump = lumpSumNow * Math.pow(1+r, n);
   return monthlyDeposit * ((Math.pow(1+r,n)-1)/r) + fvLump;
 }
 
@@ -639,6 +640,8 @@ function requiredLumpSumCalc(firstYearWithdrawal, postReturn, postInflation, yea
 
 // Simulate depletion: starting balance, withdraw firstYearWithdrawal (grows with postInflation) at start of each year,
 // remaining balance earns postReturn during the year. Returns age at depletion (within retirement years), or null if lasts.
+// maxYears MUST match the number of retirement years used elsewhere (yearsAfterRetire) so results agree
+// with buildYearlySeries / the chart / the year-by-year table for the same asset.
 function simulateDepletion(startBalance, firstYearWithdrawal, postReturn, postInflation, maxYears, retireAge, pensionIncome=0){
   const r = postReturn/100;
   const g = postInflation/100;
@@ -810,7 +813,7 @@ function calc(){
     pctLabel.textContent = ratio.toFixed(1) + '% ของเป้าหมาย';
     bar.style.background = ratio>=100 ? '#1FAE6E' : (ratio>=50 ? '#FF9B45' : '#E2725B');
 
-    const dep = simulateDepletion(fv, futureYearly, postReturn, inflationPost, yearsAfterRetire+1, ageRetire, futurePensionYearly);
+    const dep = simulateDepletion(fv, futureYearly, postReturn, inflationPost, yearsAfterRetire, ageRetire, futurePensionYearly);
     const depCell = document.getElementById(`dep-${a.id}`);
     if(dep.depleted){
       depCell.textContent = 'อายุ ~' + dep.age.toFixed(1) + ' ปี';
